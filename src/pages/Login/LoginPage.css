@@ -1,0 +1,107 @@
+/* Estilo geral da página de login */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: "Arial", sans-serif;
+}
+
+/* Container principal do formulário */
+.login-container {
+  background-color: var(--container-bg);
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.login-container h2 {
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.login-container p {
+  color: var(--text-color);
+  margin-bottom: 30px;
+}
+
+/* Agrupamento de label e input */
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Botão de login */
+.login-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--primary-color); /* Azul primário */
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.login-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.login-button:disabled {
+  background-color: #a9d1ff;
+  cursor: not-allowed;
+}
+
+/* Mensagem de erro */
+.error-message {
+  color: var(--error-color); /* Vermelho para erros */
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+/* Links de 'Esqueci a senha' e 'Cadastro' */
+.login-links {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.login-links a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.login-links a:hover {
+  text-decoration: underline;
+}
+
+.login-links span {
+  margin: 0 10px;
+  color: var(--border-color);
+}
