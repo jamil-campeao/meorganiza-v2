@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Power, PowerOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -100,6 +100,62 @@ export function CategoriesPage() {
   const handleAddNew = () => {
     setEditingCategory(null);
     setIsDialogOpen(true);
+  };
+
+  const handleToggleActive = async (category: Category) => {
+    if (!token) {
+      toast.error("Você não está autenticado.");
+      return;
+    }
+
+    const updatedCategory = { ...category, active: !category.active };
+
+    try {
+      const myHeaders = new Headers();
+      myHeaders.append("Authorization", `Bearer ${token}`);
+      myHeaders.append("Content-Type", "application/json");
+
+      const raw = JSON.stringify({
+        description: updatedCategory.description,
+        type: updatedCategory.type,
+        active: updatedCategory.active,
+      });
+
+      const requestOptions = {
+        method: "PUT" as const,
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow" as const,
+      };
+
+      const response = await fetch(
+        `${API_BASE_URL}/categories/inactive/${category.id}`,
+        requestOptions
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message ||
+            "Não foi possível atualizar o status da categoria."
+        );
+      }
+
+      // Atualiza a lista de categorias no estado local com a resposta da API
+      setCategories(
+        categories.map((c) =>
+          c.id === updatedCategory.id ? updatedCategory : c
+        )
+      );
+      toast.success(
+        `Categoria ${
+          updatedCategory.active ? "ativada" : "inativada"
+        } com sucesso!`
+      );
+    } catch (error: any) {
+      console.error("Erro ao atualizar status da categoria:", error);
+      toast.error(error.message || "Ocorreu um erro inesperado.");
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -230,10 +286,24 @@ export function CategoriesPage() {
                     {incomeCategories.map((cat) => (
                       <li
                         key={cat.id}
-                        className="flex justify-between items-center p-3 rounded-lg bg-[#64748B]/20"
+                        className={`flex justify-between items-center p-3 rounded-lg bg-[#64748B]/20 transition-opacity ${
+                          !cat.active ? "opacity-50" : ""
+                        }`}
                       >
                         <span>{cat.description}</span>
-                        <div className="space-x-2">
+                        <div className="space-x-2 flex items-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleToggleActive(cat)}
+                            title={cat.active ? "Inativar" : "Ativar"}
+                          >
+                            {cat.active ? (
+                              <Power className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <PowerOff className="h-4 w-4 text-gray-500" />
+                            )}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -286,10 +356,24 @@ export function CategoriesPage() {
                     {expenseCategories.map((cat) => (
                       <li
                         key={cat.id}
-                        className="flex justify-between items-center p-3 rounded-lg bg-[#64748B]/20"
+                        className={`flex justify-between items-center p-3 rounded-lg bg-[#64748B]/20 transition-opacity ${
+                          !cat.active ? "opacity-50" : ""
+                        }`}
                       >
                         <span>{cat.description}</span>
-                        <div className="space-x-2">
+                        <div className="space-x-2 flex items-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleToggleActive(cat)}
+                            title={cat.active ? "Inativar" : "Ativar"}
+                          >
+                            {cat.active ? (
+                              <Power className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <PowerOff className="h-4 w-4 text-gray-500" />
+                            )}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
