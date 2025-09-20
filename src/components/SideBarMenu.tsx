@@ -7,6 +7,7 @@ import {
   User,
   Settings,
   Tags,
+  Landmark,
 } from "lucide-react";
 import {
   Sidebar,
@@ -55,6 +56,17 @@ export function SideBarMenu() {
               <Link to="/categories">
                 <Tags />
                 Categorias
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/accounts"}
+            >
+              <Link to="/accounts">
+                <Landmark />
+                Contas
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
