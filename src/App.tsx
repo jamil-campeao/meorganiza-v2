@@ -7,6 +7,7 @@ import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { CategoriesPage } from "./pages/Categories/CategoriesPage";
 import { AccountsPage } from "./pages/Accounts/AccountsPage";
 import { CardsPage } from "./pages/Cards/CardsPage";
+import { TransactionsPage } from "./pages/Transactions/TransactionsPage";
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -36,6 +37,12 @@ function AppRoutes() {
       <Route
         path="/cards"
         element={isAuthenticated ? <CardsPage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/transactions"
+        element={
+          isAuthenticated ? <TransactionsPage /> : <Navigate to="/login" />
+        }
       />
 
       {/* Redirecionamento Padrão */}
