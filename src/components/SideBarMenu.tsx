@@ -9,6 +9,7 @@ import {
   Tags,
   Landmark,
   CreditCard,
+  Bell,
 } from "lucide-react";
 import {
   Sidebar,
@@ -79,6 +80,17 @@ export function SideBarMenu() {
               <Link to="/cards">
                 <CreditCard />
                 Cartões
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/bills"}
+            >
+              <Link to="/bills">
+                <Bell />
+                Contas a Pagar
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
