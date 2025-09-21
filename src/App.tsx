@@ -8,6 +8,7 @@ import { CategoriesPage } from "./pages/Categories/CategoriesPage";
 import { AccountsPage } from "./pages/Accounts/AccountsPage";
 import { CardsPage } from "./pages/Cards/CardsPage";
 import { TransactionsPage } from "./pages/Transactions/TransactionsPage";
+import { InvestmentsPage } from "./pages/Investments/InvestmentsPage";
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -42,6 +43,12 @@ function AppRoutes() {
         path="/transactions"
         element={
           isAuthenticated ? <TransactionsPage /> : <Navigate to="/login" />
+        }
+      />
+      <Route
+        path="/investments"
+        element={
+          isAuthenticated ? <InvestmentsPage /> : <Navigate to="/login" />
         }
       />
 
