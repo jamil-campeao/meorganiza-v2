@@ -11,6 +11,7 @@ import { TransactionsPage } from "./pages/Transactions/TransactionsPage";
 import { InvestmentsPage } from "./pages/Investments/InvestmentsPage";
 import { BillsPage } from "./pages/Bills/BillsPage";
 import { InvoicesPage } from "./pages/Invoices/InvoicesPage";
+import { ReportsPage } from "./pages/Reports/ReportsPage";
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -60,6 +61,10 @@ function AppRoutes() {
       <Route
         path="/invoices"
         element={isAuthenticated ? <InvoicesPage /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/reports"
+        element={isAuthenticated ? <ReportsPage /> : <Navigate to="/login" />}
       />
 
       {/* Redirecionamento Padrão */}
