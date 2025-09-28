@@ -10,6 +10,7 @@ import {
   Landmark,
   CreditCard,
   Bell,
+  Upload,
 } from "lucide-react";
 import {
   Sidebar,
@@ -113,6 +114,17 @@ export function SideBarMenu() {
               <Link to="/investments">
                 <Coins />
                 Investimentos
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/import-statement"}
+            >
+              <Link to="/import-statement">
+                <Upload />
+                Importar Extrato
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
