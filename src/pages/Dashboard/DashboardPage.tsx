@@ -1,3 +1,5 @@
+// src/pages/Dashboard/DashboardPage.tsx
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../constants/api";
@@ -26,8 +28,9 @@ import {
   Clock,
   AlertTriangle,
   TrendingUp,
-  Wallet,
 } from "lucide-react";
+import { SideBarMenu } from "../../components/SideBarMenu";
+import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
 
 interface Transaction {
   id: string;
@@ -46,7 +49,6 @@ interface SummaryData {
 }
 
 export function DashboardPage() {
-  // 2. Trazendo a lógica de estado e fetch do seu componente antigo
   const { token, logout } = useAuth();
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
@@ -59,7 +61,7 @@ export function DashboardPage() {
     []
   );
 
-  // Função para formatar valores como moeda
+  // ... (mantenha sua lógica de fetch e formatação de dados aqui)
   const formatCurrency = (value: number) => {
     return value.toLocaleString("pt-BR", {
       style: "currency",
@@ -89,10 +91,9 @@ export function DashboardPage() {
         if (!transactionsResponse.ok)
           throw new Error("Erro ao obter transações");
 
-        const transactions: Transaction[] = await transactionsResponse.json();
+        const transactions: any[] = await transactionsResponse.json();
         setRecentTransactions(transactions.slice(0, 4));
 
-        // Cálculo do resumo
         const totalIncome = transactions
           .filter((t) => t.type === "RECEITA")
           .reduce((sum, t) => sum + parseFloat(t.value), 0);
@@ -103,8 +104,7 @@ export function DashboardPage() {
 
         const currentBalance = totalIncome - totalExpenses;
 
-        // Simulação do fetch de previsão de saldo (você pode reativar o seu)
-        const forecast = 0; // Substitua pela sua lógica de fetch real se necessário
+        const forecast = 0;
 
         setSummaryData({
           balance: currentBalance,
@@ -156,7 +156,6 @@ export function DashboardPage() {
 
         setMonthlyChartData(processedMonthlyData);
 
-        // 2. Processamento para o Gráfico de Pizza (Despesas por Categoria)
         const categorySummary: { [key: string]: number } = {};
         const colors = [
           "#DC2626",
@@ -169,12 +168,13 @@ export function DashboardPage() {
         let colorIndex = 0;
 
         transactions
-          .filter((t) => t.type === "DESPESA")
-          .forEach((t) => {
-            if (!categorySummary[t.category]) {
-              categorySummary[t.category] = 0;
+          .filter((t: any) => t.type === "DESPESA")
+          .forEach((t: any) => {
+            const categoryName = t.category.description;
+            if (!categorySummary[categoryName]) {
+              categorySummary[categoryName] = 0;
             }
-            categorySummary[t.category] += parseFloat(t.value);
+            categorySummary[categoryName] += parseFloat(t.value);
           });
 
         const processedCategoryData: CategoryData[] = Object.keys(
@@ -196,7 +196,6 @@ export function DashboardPage() {
     fetchDashboardData();
   }, [token, logout]);
 
-  // 4. Renderização condicional enquanto os dados carregam ou em caso de erro
   if (isLoading) {
     return <div className="p-6">Carregando dados...</div>;
   }
@@ -206,98 +205,93 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark">
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-[#8B3A3A] rounded-lg flex items-center justify-center">
-              <Wallet className="h-6 w-6 text-[#F8FAFC]" />
+    <SidebarProvider>
+      <SideBarMenu />
+      <SidebarInset>
+        <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
+          <div className="container mx-auto p-6">
+            <div className="mb-8">
+              {summaryData && <DashboardOverview summaryData={summaryData} />}
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-[#E2E8F0]">MeOrganiza</h1>
-              <p className="text-[#E2E8F0]/70">Sua gestão financeira pessoal</p>
-            </div>
+
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-6 bg-[#475569] rounded-lg p-1">
+                <TabsTrigger
+                  value="overview"
+                  className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
+                >
+                  <BarChart3 className="h-4 w-4" /> Visão Geral
+                </TabsTrigger>
+                <TabsTrigger
+                  value="transactions"
+                  className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
+                >
+                  <Clock className="h-4 w-4" /> Transações
+                </TabsTrigger>
+                <TabsTrigger
+                  value="add"
+                  className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
+                >
+                  <PlusCircle className="h-4 w-4" /> Adicionar
+                </TabsTrigger>
+                <TabsTrigger
+                  value="bills"
+                  className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
+                >
+                  <AlertTriangle className="h-4 w-4" /> Contas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="investments"
+                  className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
+                >
+                  <TrendingUp className="h-4 w-4" /> Investimentos
+                </TabsTrigger>
+                <TabsTrigger
+                  value="reports"
+                  className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
+                >
+                  <DollarSign className="h-4 w-4" /> Relatórios
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                <TransactionChart
+                  monthlyData={monthlyChartData}
+                  categoryData={categoryChartData}
+                />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <RecentTransactions transactions={recentTransactions} />
+                  <BillAlerts />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="transactions">
+                <RecentTransactions transactions={recentTransactions} />
+              </TabsContent>
+
+              <TabsContent value="add">
+                <QuickTransactionForm />
+              </TabsContent>
+
+              <TabsContent value="bills">
+                <BillAlerts />
+              </TabsContent>
+
+              <TabsContent value="investments">
+                <InvestmentSummary />
+              </TabsContent>
+
+              <TabsContent value="reports">
+                <TransactionChart
+                  monthlyData={monthlyChartData}
+                  categoryData={categoryChartData}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
-          {summaryData && <DashboardOverview summaryData={summaryData} />}
         </div>
-
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-[#475569] rounded-lg p-1">
-            <TabsTrigger
-              value="overview"
-              className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
-            >
-              <BarChart3 className="h-4 w-4" /> Visão Geral
-            </TabsTrigger>
-            <TabsTrigger
-              value="transactions"
-              className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
-            >
-              <Clock className="h-4 w-4" /> Transações
-            </TabsTrigger>
-            <TabsTrigger
-              value="add"
-              className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
-            >
-              <PlusCircle className="h-4 w-4" /> Adicionar
-            </TabsTrigger>
-            <TabsTrigger
-              value="bills"
-              className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
-            >
-              <AlertTriangle className="h-4 w-4" /> Contas
-            </TabsTrigger>
-            <TabsTrigger
-              value="investments"
-              className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
-            >
-              <TrendingUp className="h-4 w-4" /> Investimentos
-            </TabsTrigger>
-            <TabsTrigger
-              value="reports"
-              className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"
-            >
-              <DollarSign className="h-4 w-4" /> Relatórios
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            <TransactionChart
-              monthlyData={monthlyChartData}
-              categoryData={categoryChartData}
-            />
-            <div className="grid gap-6 md:grid-cols-2">
-              <RecentTransactions transactions={recentTransactions} />{" "}
-              <BillAlerts />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="transactions">
-            <RecentTransactions transactions={recentTransactions} />
-          </TabsContent>
-
-          <TabsContent value="add">
-            <QuickTransactionForm />
-          </TabsContent>
-
-          <TabsContent value="bills">
-            <BillAlerts />
-          </TabsContent>
-
-          <TabsContent value="investments">
-            <InvestmentSummary />
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <TransactionChart
-              monthlyData={monthlyChartData}
-              categoryData={categoryChartData}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <Toaster theme="dark" />
-    </div>
+        <Toaster theme="dark" />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
