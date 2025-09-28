@@ -9,28 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Calendar } from "./ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../constants/api";
 import { toast } from "sonner";
 import { Category } from "../pages/Categories/CategoriesPage";
-
-interface Bill {
-  id: number;
-  description: string;
-  amount: number;
-  dueDate: string;
-  isPaid: boolean;
-  recurring: string;
-  categoryId: number;
-}
+import { Account } from "../pages/Accounts/AccountsPage";
+import { CardData } from "../pages/Cards/CardsPage";
+import { Bill } from "../pages/Bills/BillsPage";
 
 interface BillFormProps {
   bill: Bill | null;
-  onSave: (bill: Bill) => void;
+  onSave: () => void;
   onCancel: () => void;
 }
 
@@ -39,47 +28,50 @@ export function BillForm({ bill, onSave, onCancel }: BillFormProps) {
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
-    dueDate: new Date(),
-    recurring: "",
+    dueDateDay: "",
+    recurring: "MONTHLY",
     categoryId: "",
+    accountId: "",
+    cardId: "",
   });
 
+  // Estados para os seletores
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [cards, setCards] = useState<CardData[]>([]);
 
+  // Efeito para buscar todos os dados necessários (categorias, contas, cartões)
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async (endpoint: string, setter: React.Dispatch<any>) => {
       if (!token) return;
       try {
-        const response = await fetch(`${API_BASE_URL}/categories`, {
+        const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok)
-          throw new Error("Não foi possível carregar as categorias.");
+          throw new Error(`Não foi possível carregar ${endpoint}.`);
         const data = await response.json();
-        setCategories(data.filter((cat: Category) => cat.type === "DESPESA")); // Mostra apenas categorias de despesa
+        setter(data.filter((item: any) => item.active !== false));
       } catch (error: any) {
         toast.error(error.message);
       }
     };
-    fetchCategories();
+    fetchData("categories", setCategories);
+    fetchData("account", setAccounts);
+    fetchData("card", setCards);
   }, [token]);
 
+  // Efeito para preencher o formulário no modo de edição
   useEffect(() => {
     if (bill) {
       setFormData({
         description: bill.description,
         amount: bill.amount.toString(),
-        dueDate: new Date(bill.dueDate),
+        dueDateDay: bill.dueDateDay.toString(),
         recurring: bill.recurring,
         categoryId: bill.categoryId.toString(),
-      });
-    } else {
-      setFormData({
-        description: "",
-        amount: "",
-        dueDate: new Date(),
-        recurring: "monthly",
-        categoryId: "",
+        accountId: bill.accountId?.toString() || "",
+        cardId: bill.cardId?.toString() || "",
       });
     }
   }, [bill]);
@@ -90,8 +82,16 @@ export function BillForm({ bill, onSave, onCancel }: BillFormProps) {
   };
 
   const handleSelectChange =
-    (id: "recurring" | "categoryId") => (value: string) => {
-      setFormData((prev) => ({ ...prev, [id]: value }));
+    (id: "recurring" | "categoryId" | "accountId" | "cardId") =>
+    (value: string) => {
+      // Lógica para garantir que apenas conta ou cartão seja selecionado
+      if (id === "accountId" && value) {
+        setFormData((prev) => ({ ...prev, accountId: value, cardId: "" }));
+      } else if (id === "cardId" && value) {
+        setFormData((prev) => ({ ...prev, cardId: value, accountId: "" }));
+      } else {
+        setFormData((prev) => ({ ...prev, [id]: value }));
+      }
     };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,8 +113,10 @@ export function BillForm({ bill, onSave, onCancel }: BillFormProps) {
         body: JSON.stringify({
           ...formData,
           amount: parseFloat(formData.amount),
-          dueDate: formData.dueDate.toISOString(),
+          dueDateDay: parseInt(formData.dueDateDay),
           categoryId: parseInt(formData.categoryId),
+          accountId: formData.accountId ? parseInt(formData.accountId) : null,
+          cardId: formData.cardId ? parseInt(formData.cardId) : null,
         }),
       });
 
@@ -123,32 +125,35 @@ export function BillForm({ bill, onSave, onCancel }: BillFormProps) {
         throw new Error(errorData.message || "Falha ao salvar a conta.");
       }
 
-      const savedBill = await response.json();
       toast.success(`Conta ${bill ? "atualizada" : "criada"} com sucesso!`);
-      onSave(savedBill);
+      onSave();
     } catch (error: any) {
       toast.error(error.message);
     }
   };
 
+  const filteredCategories = categories.filter((c) => c.type === "DESPESA");
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="description">Descrição</Label>
+        <Label htmlFor="description">Descrição da Conta</Label>
         <Input
           id="description"
           value={formData.description}
           onChange={handleChange}
-          placeholder="Ex: Aluguel"
+          placeholder="Ex: Assinatura Netflix"
           required
         />
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="amount">Valor</Label>
+          <Label htmlFor="amount">Valor Padrão</Label>
           <Input
             id="amount"
             type="number"
+            step="0.01"
             value={formData.amount}
             onChange={handleChange}
             placeholder="R$ 0,00"
@@ -156,67 +161,105 @@ export function BillForm({ bill, onSave, onCancel }: BillFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="dueDate">Data de Vencimento</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(formData.dueDate, "dd/MM/yyyy")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={formData.dueDate}
-                onSelect={(d) =>
-                  d && setFormData((prev) => ({ ...prev, dueDate: d }))
-                }
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Label htmlFor="dueDateDay">Dia do Vencimento</Label>
+          <Input
+            id="dueDateDay"
+            type="number"
+            min="1"
+            max="31"
+            value={formData.dueDateDay}
+            onChange={handleChange}
+            placeholder="Ex: 10"
+            required
+          />
         </div>
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="categoryId">Categoria</Label>
+        <Select
+          value={formData.categoryId}
+          onValueChange={handleSelectChange("categoryId")}
+          required
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a categoria..." />
+          </SelectTrigger>
+          <SelectContent>
+            {filteredCategories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id.toString()}>
+                {cat.description}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1">
+        <Label>Forma de Pagamento (Opcional)</Label>
+        <p className="text-xs text-gray-400">
+          Vincule a uma conta (débito) ou cartão (crédito).
+        </p>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="recurring">Recorrência</Label>
+          <Label htmlFor="accountId">Conta</Label>
           <Select
-            value={formData.recurring}
-            onValueChange={handleSelectChange("recurring")}
+            value={formData.accountId}
+            onValueChange={handleSelectChange("accountId")}
+            disabled={!!formData.cardId}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Nenhuma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="monthly">Mensal</SelectItem>
-              <SelectItem value="yearly">Anual</SelectItem>
-              <SelectItem value="no">Não recorrente</SelectItem>
+              {accounts.map((acc) => (
+                <SelectItem key={acc.id} value={acc.id.toString()}>
+                  {acc.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="categoryId">Categoria</Label>
+          <Label htmlFor="cardId">Cartão de Crédito</Label>
           <Select
-            value={formData.categoryId}
-            onValueChange={handleSelectChange("categoryId")}
-            required
+            value={formData.cardId}
+            onValueChange={handleSelectChange("cardId")}
+            disabled={!!formData.accountId}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione..." />
+              <SelectValue placeholder="Nenhum" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id.toString()}>
-                  {cat.description}
+              {cards.map((card) => (
+                <SelectItem key={card.id} value={card.id.toString()}>
+                  {card.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="recurring">Recorrência</Label>
+        <Select
+          value={formData.recurring}
+          onValueChange={handleSelectChange("recurring")}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="NONE">Única</SelectItem>
+            <SelectItem value="MONTHLY">Mensal</SelectItem>
+            <SelectItem value="ANNUALLY">Anual</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
