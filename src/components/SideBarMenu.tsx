@@ -10,6 +10,8 @@ import {
   Landmark,
   CreditCard,
   Bell,
+  Receipt,
+  BarChartHorizontalBig,
 } from "lucide-react";
 import {
   Sidebar,
@@ -113,6 +115,28 @@ export function SideBarMenu() {
               <Link to="/investments">
                 <Coins />
                 Investimentos
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/invoices"}
+            >
+              <Link to="/invoices">
+                <Receipt />
+                Faturas
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/reports"}
+            >
+              <Link to="/reports">
+                <BarChartHorizontalBig />
+                Relatórios
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -7,7 +7,7 @@ import {
   Wallet,
   CheckCircle,
   Loader2,
-} from "lucide-react"; // 1. Importar o ícone de Loader
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../constants/api";
 import { Button } from "./ui/button";
@@ -36,11 +36,14 @@ interface BillPayment {
   };
 }
 
-export function BillAlerts() {
+interface BillAlertsProps {
+  onDataChange: () => void;
+}
+
+export function BillAlerts({ onDataChange }: BillAlertsProps) {
   const { token } = useAuth();
   const [pendingPayments, setPendingPayments] = useState<BillPayment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  // 2. Novo estado para controlar o carregamento do pagamento de uma conta específica
   const [payingId, setPayingId] = useState<number | null>(null);
 
   const fetchPendingBills = async () => {
@@ -56,7 +59,6 @@ export function BillAlerts() {
       setPendingPayments(data);
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -68,8 +70,7 @@ export function BillAlerts() {
 
   const handlePayBill = async (paymentId: number) => {
     if (!token) return;
-
-    setPayingId(paymentId); // 3. Ativa o estado de carregamento para este botão
+    setPayingId(paymentId);
 
     try {
       const response = await fetch(`${API_BASE_URL}/bill/pay/${paymentId}`, {
@@ -81,11 +82,12 @@ export function BillAlerts() {
         throw new Error(errorData.message || "Falha ao pagar a conta.");
       }
       toast.success("Conta paga com sucesso! Uma nova despesa foi registrada.");
-      fetchPendingBills();
+      onDataChange();
+      setPendingPayments(pendingPayments.filter((p) => p.id !== paymentId));
     } catch (error: any) {
       toast.error(error.message);
     } finally {
-      setPayingId(null); // 4. Desativa o estado de carregamento, independentemente do resultado
+      setPayingId(null);
     }
   };
 
@@ -139,14 +141,13 @@ export function BillAlerts() {
           <div className="space-y-4">
             {billsToDisplay.map((payment) => {
               const { status, daysLeft } = getStatus(payment.dueDate);
-              const isPaying = payingId === payment.id; // Verifica se este é o item sendo pago
+              const isPaying = payingId === payment.id;
 
               return (
                 <div
                   key={payment.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-[#64748B]/20 border border-[#64748B]"
                 >
-                  {/* ... (código da descrição da conta, que permanece o mesmo) ... */}
                   <div className="flex items-center space-x-3">
                     <div
                       className={`p-2 rounded-full ${
@@ -194,7 +195,6 @@ export function BillAlerts() {
                       </Badge>
                     </div>
 
-                    {/* 5. BOTÃO DE PAGAR AGORA ACIONA UM MODAL DE CONFIRMAÇÃO */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -206,8 +206,8 @@ export function BillAlerts() {
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <>
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Pagar
+                              {" "}
+                              <CheckCircle className="h-4 w-4 mr-2" /> Pagar{" "}
                             </>
                           )}
                         </Button>

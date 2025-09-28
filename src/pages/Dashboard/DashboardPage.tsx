@@ -1,6 +1,6 @@
 // src/pages/Dashboard/DashboardPage.tsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../constants/api";
 
@@ -38,7 +38,7 @@ interface Transaction {
   description: string;
   value: string;
   type: "RECEITA" | "DESPESA";
-  category: string;
+  category: any;
 }
 
 interface SummaryData {
@@ -61,140 +61,144 @@ export function DashboardPage() {
     []
   );
 
-  // ... (mantenha sua lógica de fetch e formatação de dados aqui)
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
+  const fetchDashboardData = useCallback(async () => {
+    if (!token) return;
+    setError(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!token) return;
+    try {
+      const [transactionsResponse, accountsResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/transaction`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/account`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      setIsLoading(true);
-      setError(null);
+      if (
+        transactionsResponse.status === 401 ||
+        accountsResponse.status === 401
+      ) {
+        logout();
+        return;
+      }
+      if (!transactionsResponse.ok || !accountsResponse.ok) {
+        throw new Error("Erro ao carregar os dados do dashboard.");
+      }
 
-      try {
-        const transactionsResponse = await fetch(
-          `${API_BASE_URL}/transaction`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+      const transactions: Transaction[] = await transactionsResponse.json();
+      const accounts: any[] = await accountsResponse.json();
 
-        if (transactionsResponse.status === 401) {
-          logout();
-          return;
+      setRecentTransactions(transactions.slice(0, 5)); // Exibir 5 transações recentes
+
+      // Saldo total é a soma do saldo de todas as contas
+      const totalBalance = accounts.reduce(
+        (sum, acc) => sum + parseFloat(acc.balance),
+        0
+      );
+
+      const currentMonth = new Date().getMonth();
+      // Receitas e Despesas do mês atual
+      const totalIncome = transactions
+        .filter(
+          (t) =>
+            t.type === "RECEITA" && new Date(t.date).getMonth() === currentMonth
+        )
+        .reduce((sum, t) => sum + parseFloat(t.value), 0);
+
+      const totalExpenses = transactions
+        .filter(
+          (t) =>
+            t.type === "DESPESA" && new Date(t.date).getMonth() === currentMonth
+        )
+        .reduce((sum, t) => sum + parseFloat(t.value), 0);
+
+      setSummaryData({
+        balance: totalBalance,
+        income: totalIncome,
+        expenses: totalExpenses,
+        forecast: 0,
+      });
+
+      // --- Lógica para Gráficos (permanece a mesma) ---
+      const monthlySummary: {
+        [key: string]: { receitas: number; despesas: number };
+      } = {};
+      const monthNames = [
+        "Jan",
+        "Fev",
+        "Mar",
+        "Abr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Set",
+        "Out",
+        "Nov",
+        "Dez",
+      ];
+      transactions.forEach((t) => {
+        const monthIndex = new Date(t.date).getMonth();
+        const monthName = monthNames[monthIndex];
+        if (!monthlySummary[monthName]) {
+          monthlySummary[monthName] = { receitas: 0, despesas: 0 };
         }
-        if (!transactionsResponse.ok)
-          throw new Error("Erro ao obter transações");
+        if (t.type === "RECEITA") {
+          monthlySummary[monthName].receitas += parseFloat(t.value);
+        } else {
+          monthlySummary[monthName].despesas += parseFloat(t.value);
+        }
+      });
+      const processedMonthlyData: MonthlyData[] = Object.keys(
+        monthlySummary
+      ).map((month) => ({
+        month,
+        receitas: monthlySummary[month].receitas,
+        despesas: monthlySummary[month].despesas,
+      }));
+      setMonthlyChartData(processedMonthlyData);
 
-        const transactions: any[] = await transactionsResponse.json();
-        setRecentTransactions(transactions.slice(0, 4));
-
-        const totalIncome = transactions
-          .filter((t) => t.type === "RECEITA")
-          .reduce((sum, t) => sum + parseFloat(t.value), 0);
-
-        const totalExpenses = transactions
-          .filter((t) => t.type === "DESPESA")
-          .reduce((sum, t) => sum + parseFloat(t.value), 0);
-
-        const currentBalance = totalIncome - totalExpenses;
-
-        const forecast = 0;
-
-        setSummaryData({
-          balance: currentBalance,
-          income: totalIncome,
-          expenses: totalExpenses,
-          forecast: forecast,
-        });
-
-        const monthlySummary: {
-          [key: string]: { receitas: number; despesas: number };
-        } = {};
-        const monthNames = [
-          "Jan",
-          "Fev",
-          "Mar",
-          "Abr",
-          "Mai",
-          "Jun",
-          "Jul",
-          "Ago",
-          "Set",
-          "Out",
-          "Nov",
-          "Dez",
-        ];
-
-        transactions.forEach((t) => {
-          const monthIndex = new Date(t.date).getMonth();
-          const monthName = monthNames[monthIndex];
-
-          if (!monthlySummary[monthName]) {
-            monthlySummary[monthName] = { receitas: 0, despesas: 0 };
+      const categorySummary: { [key: string]: number } = {};
+      const colors = [
+        "#DC2626",
+        "#3B82F6",
+        "#F59E0B",
+        "#22C55E",
+        "#8B5CF6",
+        "#ec4899",
+      ];
+      let colorIndex = 0;
+      transactions
+        .filter((t: any) => t.type === "DESPESA")
+        .forEach((t: any) => {
+          const categoryName = t.category.description;
+          if (!categorySummary[categoryName]) {
+            categorySummary[categoryName] = 0;
           }
-
-          if (t.type === "RECEITA") {
-            monthlySummary[monthName].receitas += parseFloat(t.value);
-          } else {
-            monthlySummary[monthName].despesas += parseFloat(t.value);
-          }
+          categorySummary[categoryName] += parseFloat(t.value);
         });
-
-        const processedMonthlyData: MonthlyData[] = Object.keys(
-          monthlySummary
-        ).map((month) => ({
-          month,
-          receitas: monthlySummary[month].receitas,
-          despesas: monthlySummary[month].despesas,
-        }));
-
-        setMonthlyChartData(processedMonthlyData);
-
-        const categorySummary: { [key: string]: number } = {};
-        const colors = [
-          "#DC2626",
-          "#3B82F6",
-          "#F59E0B",
-          "#22C55E",
-          "#8B5CF6",
-          "#ec4899",
-        ];
-        let colorIndex = 0;
-
-        transactions
-          .filter((t: any) => t.type === "DESPESA")
-          .forEach((t: any) => {
-            const categoryName = t.category.description;
-            if (!categorySummary[categoryName]) {
-              categorySummary[categoryName] = 0;
-            }
-            categorySummary[categoryName] += parseFloat(t.value);
-          });
-
-        const processedCategoryData: CategoryData[] = Object.keys(
-          categorySummary
-        ).map((name) => ({
-          name,
-          value: categorySummary[name],
-          color: colors[colorIndex++ % colors.length],
-        }));
-
-        setCategoryChartData(processedCategoryData);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
+      const processedCategoryData: CategoryData[] = Object.keys(
+        categorySummary
+      ).map((name) => ({
+        name,
+        value: categorySummary[name],
+        color: colors[colorIndex++ % colors.length],
+      }));
+      setCategoryChartData(processedCategoryData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      // Garante que o loading inicial seja desativado apenas uma vez
+      if (isLoading) {
         setIsLoading(false);
       }
-    };
+    }
+  }, [token, logout, isLoading]);
 
+  useEffect(() => {
     fetchDashboardData();
-  }, [token, logout]);
+  }, [fetchDashboardData]);
 
   if (isLoading) {
     return <div className="p-6">Carregando dados...</div>;
@@ -261,7 +265,7 @@ export function DashboardPage() {
                 />
                 <div className="grid gap-6 md:grid-cols-2">
                   <RecentTransactions transactions={recentTransactions} />
-                  <BillAlerts />
+                  <BillAlerts onDataChange={fetchDashboardData} />
                 </div>
               </TabsContent>
 
@@ -270,11 +274,11 @@ export function DashboardPage() {
               </TabsContent>
 
               <TabsContent value="add">
-                <QuickTransactionForm />
+                <QuickTransactionForm onTransactionAdded={fetchDashboardData} />
               </TabsContent>
 
               <TabsContent value="bills">
-                <BillAlerts />
+                <BillAlerts onDataChange={fetchDashboardData} />
               </TabsContent>
 
               <TabsContent value="investments">
