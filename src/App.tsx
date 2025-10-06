@@ -12,6 +12,8 @@ import { InvestmentsPage } from "./pages/Investments/InvestmentsPage";
 import { BillsPage } from "./pages/Bills/BillsPage";
 import { InvoicesPage } from "./pages/Invoices/InvoicesPage";
 import { ReportsPage } from "./pages/Reports/ReportsPage";
+import ForgotPasswordPage from "./pages/ForgotPassword/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPassword/ResetPasswordPage";
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -22,6 +24,8 @@ function AppRoutes() {
       {/* Rotas Públicas */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
       {/* Rotas Protegidas */}
       <Route
