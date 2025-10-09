@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [createCategories, setCreateCategories] = useState<boolean[]>(false);
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -42,7 +43,7 @@ export default function RegisterPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, createCategories }),
       });
 
       if (!response.ok) {
@@ -134,6 +135,20 @@ export default function RegisterPage() {
             />
             <label htmlFor="terms">
               Eu li e aceito os termos de privacidade.
+            </label>
+          </div>
+
+          <div className="form-group checkbox-group">
+            <input
+              type="checkbox"
+              id="create-categories"
+              checked={createCategories}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setCreateCategories(e.target.checked)
+              }
+            />
+            <label htmlFor="create-categories">
+              Criar categorias de receitas e despesas automaticamente.
             </label>
           </div>
 
