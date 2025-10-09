@@ -12,12 +12,17 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../constants/api";
 import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Calendar } from "./ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 
 // Interfaces
 import { Transaction } from "../pages/Transactions/TransactionsPage";
 import { Account } from "../pages/Accounts/AccountsPage";
 import { Category } from "../pages/Categories/CategoriesPage";
 import { CardData } from "../pages/Cards/CardsPage";
+import { cn } from "./ui/utils";
 
 interface TransactionFormProps {
   transaction: Transaction | null;
@@ -86,6 +91,12 @@ export function TransactionForm({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setFormData((prev) => ({ ...prev, date }));
+    }
   };
 
   const handleSelectChange =
@@ -170,8 +181,36 @@ export function TransactionForm({
             required
           />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="date">Data</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !formData.date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formData.date ? (
+                  format(formData.date, "dd/MM/yyyy")
+                ) : (
+                  <span>Escolha uma data</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={formData.date}
+                onSelect={handleDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
-
       {formData.type !== "TRANSFERENCIA" && (
         <>
           <div className="space-y-2">
