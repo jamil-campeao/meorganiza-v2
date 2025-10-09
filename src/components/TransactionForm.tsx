@@ -9,10 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Calendar } from "./ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../constants/api";
 import { toast } from "sonner";
@@ -25,7 +21,7 @@ import { CardData } from "../pages/Cards/CardsPage";
 
 interface TransactionFormProps {
   transaction: Transaction | null;
-  onSave: (transactionData: any) => void; // Usando 'any' para acomodar a transferência
+  onSave: (transactionData: any) => void;
   onCancel: () => void;
 }
 
@@ -44,6 +40,7 @@ export function TransactionForm({
     accountId: "", // Conta de Origem
     targetAccountId: "",
     cardId: "",
+    installments: "1",
   });
 
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -79,8 +76,9 @@ export function TransactionForm({
         date: new Date(transaction.date),
         categoryId: transaction.categoryId?.toString() || "",
         accountId: transaction.accountId?.toString() || "",
-        targetAccountId: "", // Transferências não são editáveis neste escopo
+        targetAccountId: "",
         cardId: transaction.cardId?.toString() || "",
+        installments: "1", // Parcelas não são editáveis, sempre 1 na edição
       });
     }
   }, [transaction]);
@@ -97,6 +95,10 @@ export function TransactionForm({
       if (id === "type") {
         newState.cardId = "";
         newState.categoryId = "";
+        newState.installments = "1"; // Reseta parcelas ao mudar o tipo
+      }
+      if (id === "cardId" && !value) {
+        newState.installments = "1"; // Reseta parcelas se o cartão for desmarcado
       }
       setFormData(newState);
     };
@@ -126,11 +128,16 @@ export function TransactionForm({
         ? parseInt(formData.targetAccountId)
         : null,
       cardId: formData.cardId ? parseInt(formData.cardId) : null,
+      installments: parseInt(formData.installments), // Envia o número de parcelas
     };
     onSave(submissionData);
   };
 
   const filteredCategories = categories.filter((c) => c.type === formData.type);
+
+  // Condição para mostrar o campo de parcelas
+  const showInstallments =
+    formData.type === "DESPESA" && !!formData.cardId && !transaction; // Não mostra na edição
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,6 +147,7 @@ export function TransactionForm({
           <Select
             value={formData.type}
             onValueChange={handleSelectChange("type")}
+            disabled={!!transaction} // Desabilita a troca de tipo na edição
           >
             <SelectTrigger>
               <SelectValue />
@@ -164,7 +172,6 @@ export function TransactionForm({
         </div>
       </div>
 
-      {/* 3. Renderização condicional dos campos */}
       {formData.type !== "TRANSFERENCIA" && (
         <>
           <div className="space-y-2">
@@ -211,7 +218,7 @@ export function TransactionForm({
           value={formData.accountId}
           onValueChange={handleSelectChange("accountId")}
           disabled={!!formData.cardId}
-          required
+          required={formData.type !== "DESPESA"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione uma conta..." />
@@ -249,27 +256,42 @@ export function TransactionForm({
       )}
 
       {formData.type === "DESPESA" && (
-        <div className="space-y-2">
-          <Label htmlFor="cardId">
-            Pagar com (Cartão) -{" "}
-            <span className="text-xs text-gray-400">Opcional</span>
-          </Label>
-          <Select
-            value={formData.cardId}
-            onValueChange={handleSelectChange("cardId")}
-            disabled={!!formData.accountId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um cartão..." />
-            </SelectTrigger>
-            <SelectContent>
-              {cards.map((card) => (
-                <SelectItem key={card.id} value={card.id.toString()}>
-                  {card.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="cardId">
+              Pagar com (Cartão) -{" "}
+              <span className="text-xs text-gray-400">Opcional</span>
+            </Label>
+            <Select
+              value={formData.cardId}
+              onValueChange={handleSelectChange("cardId")}
+              disabled={!!formData.accountId || !!transaction} // Desabilita na edição
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um cartão..." />
+              </SelectTrigger>
+              <SelectContent>
+                {cards.map((card) => (
+                  <SelectItem key={card.id} value={card.id.toString()}>
+                    {card.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {showInstallments && (
+            <div className="space-y-2">
+              <Label htmlFor="installments">Nº de Parcelas</Label>
+              <Input
+                id="installments"
+                type="number"
+                min="1"
+                value={formData.installments}
+                onChange={handleChange}
+                placeholder="1"
+              />
+            </div>
+          )}
         </div>
       )}
 
