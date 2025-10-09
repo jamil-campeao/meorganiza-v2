@@ -108,7 +108,10 @@ export function TransactionsPage() {
   };
 
   const handleSave = async (
-    transactionData: Omit<Transaction, "id" | "category" | "account" | "card">
+    transactionData: Omit<
+      Transaction,
+      "id" | "category" | "account" | "card"
+    > & { installments?: number }
   ) => {
     if (!token) return;
 
@@ -133,12 +136,16 @@ export function TransactionsPage() {
         throw new Error(errorData.message || "Falha ao salvar a transação.");
       }
 
-      toast.success(
-        `Transação ${isEditing ? "atualizada" : "criada"} com sucesso!`
-      );
+      const result = await response.json();
+      const successMessage =
+        result.message ||
+        `Transação ${isEditing ? "atualizada" : "criada"} com sucesso!`;
+
+      toast.success(successMessage);
+
       setIsDialogOpen(false);
       setEditingTransaction(null);
-      fetchTransactions(); // Re-busca os dados para refletir as mudanças (inclusive de saldo)
+      fetchTransactions();
     } catch (error: any) {
       toast.error(error.message);
     }
