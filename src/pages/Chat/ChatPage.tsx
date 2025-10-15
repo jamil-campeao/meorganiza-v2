@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, FormEvent } from "react";
 import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
 import { SideBarMenu } from "../../components/SideBarMenu";
 import { Button } from "../../components/ui/button";
@@ -6,42 +6,119 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Input } from "../../components/ui/input";
 import { useAuth } from "../../context/AuthContext";
 import { Toaster, toast } from "sonner";
-import { Bot, Send, User } from "lucide-react";
+import { Bot, Send, User, Loader2, XCircle } from "lucide-react";
 import { ScrollArea } from "../../components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import { Avatar, AvatarFallback } from "../../components/ui/avatar";
 import { API_BASE_URL } from "../../constants/api";
 
 interface Message {
-  sender: 'user' | 'ai';
+  sender: 'USER' | 'AI';
   text: string;
 }
 
+const initialMessage: Message = { sender: 'AI', text: 'Olá! Sou seu assistente financeiro. Como posso ajudar hoje?' };
+
 export function ChatPage() {
-  const { token } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    { sender: 'ai', text: 'Olá! Sou seu assistente financeiro. Como posso ajudar hoje?' }
-  ]);
+  const { token, logout } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [input, setInput] = useState('');
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Efeito para buscar uma conversa ativa ao carregar a página
+  useEffect(() => {
+    const loadActiveConversation = async () => {
+      if (!token) return;
+      try {
+        const myHeaders = new Headers();
+        myHeaders.append("Authorization", `Bearer ${token}`);
+        const requestOptions = { method: "GET", headers: myHeaders };
+
+        const response = await fetch(`${API_BASE_URL}/chat/`, requestOptions);
+
+        // Se não encontrar uma conversa ativa (404), não é um erro, apenas começa uma nova.
+        if (response.status === 404) {
+          setConversationId(null);
+          setMessages([initialMessage]);
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar o histórico do chat.");
+        }
+
+        const data = await response.json();
+
+        if (data) {
+          console.log('entrei aqui depois')
+          const data_primeira = data[0];
+        
+        if (data_primeira.messages && data_primeira.messages.length > 0) {
+          setMessages(data_primeira.messages);
+          setConversationId(data_primeira.id);
+        }
+      }
+
+      } catch (err: any) {
+        toast.error(err.message);
+      }
+    };
+
+    loadActiveConversation();
+  }, [token]);
+
   // Efeito para rolar para a última mensagem
   useEffect(() => {
-    if (scrollAreaRef.current) {
-        const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-        if (viewport) {
-            viewport.scrollTop = viewport.scrollHeight;
-        }
+    const scrollViewport = scrollAreaRef.current?.querySelector('div[data-radix-scroll-area-viewport]');
+    if (scrollViewport) {
+      setTimeout(() => {
+        scrollViewport.scrollTop = scrollViewport.scrollHeight;
+      }, 100);
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
 
-const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
+  const handleFinishSession = async () => {
+    if (!conversationId || !token) {
+        // Se não há conversa, apenas reseta o estado local
+        setMessages([initialMessage]);
+        setConversationId(null);
+        toast.info("Nenhuma conversa ativa para finalizar.");
+        return;
+    };
+    
+    try {
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("Authorization", `Bearer ${token}`);
+        const requestOptions = {
+            method: "PATCH",
+            headers: myHeaders,
+            body: JSON.stringify({ conversationId })
+        };
+
+        const response = await fetch(`${API_BASE_URL}/chat`, requestOptions);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || "Não foi possível finalizar a conversa.");
+        }
+        
+        toast.success("Conversa finalizada. Você pode começar uma nova.");
+        setMessages([initialMessage]);
+        setConversationId(null);
+
+    } catch (err: any) {
+        toast.error(err.message);
+    }
+  };
+
+
+  const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { sender: 'user', text: input };
+    const userMessage: Message = { sender: 'USER', text: input };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     const currentInput = input;
     setInput('');
@@ -65,6 +142,11 @@ const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
 
         const response = await fetch(`${API_BASE_URL}/chat`, requestOptions);
 
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || "O assistente não conseguiu responder.");
@@ -72,52 +154,55 @@ const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
 
         const apiResponse = await response.json();
       
-        // Salva o conversationId retornado pela API no estado do front-end
-        if (apiResponse.conversationId) {
+        if (apiResponse.conversationId && !conversationId) {
             setConversationId(apiResponse.conversationId);
         }
 
-        const aiMessage: Message = { sender: 'ai', text: apiResponse.text || "Desculpe, não consegui processar sua solicitação." };
+        const aiMessage: Message = { sender: 'AI', text: apiResponse.text || "Desculpe, não consegui processar sua solicitação." };
         setMessages((prevMessages) => [...prevMessages, aiMessage]);
 
     } catch (err: any) {
         toast.error(err.message);
-        const errorMessage: Message = { sender: 'ai', text: `Ocorreu um erro: ${err.message}` };
+        const errorMessage: Message = { sender: 'AI', text: `Ocorreu um erro: ${err.message}` };
         setMessages((prevMessages) => [...prevMessages, errorMessage]);
     } finally {
         setIsLoading(false);
     }
-};
+  };
 
   return (
     <SidebarProvider>
       <SideBarMenu />
       <SidebarInset>
         <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
-          <div className="container mx-auto p-6 h-full flex flex-col">
+          <div className="container mx-auto p-6 h-screen flex flex-col">
             <h1 className="text-3xl font-bold mb-6">Assistente IA</h1>
             
-            <Card className="border border-[#64748B] bg-[#3F4A5C] flex-1 flex flex-col">
-              <CardHeader>
+            <Card className="border border-[#64748B] bg-[#3F4A5C] flex-1 flex flex-col overflow-hidden">
+              <CardHeader className="flex flex-row justify-between items-center">
                 <CardTitle className="flex items-center gap-2">
                   <Bot />
                   Assistente Financeiro
                 </CardTitle>
+                <Button variant="ghost" size="sm" onClick={handleFinishSession}>
+                    <XCircle className="mr-2 h-4 w-4"/>
+                    Finalizar Conversa
+                </Button>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col gap-4">
-                <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
-                    <div className="space-y-6">
+              <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
+                <ScrollArea className="flex-1 pr-4 -mr-4" ref={scrollAreaRef}>
+                    <div className="space-y-6 pb-4">
                     {messages.map((msg, index) => (
-                        <div key={index} className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
-                        {msg.sender === 'ai' && (
+                        <div key={index} className={`flex items-start gap-3 ${msg.sender === 'USER' ? 'justify-end' : ''}`}>
+                        {msg.sender === 'AI' && (
                             <Avatar className="size-8">
-                                <AvatarFallback className="bg-primary text-primary-foreground">IA</AvatarFallback>
+                                <AvatarFallback className="bg-[#8B3A3A] text-primary-foreground">IA</AvatarFallback>
                             </Avatar>
                         )}
-                        <div className={`rounded-lg px-4 py-2 max-w-[80%] ${msg.sender === 'user' ? 'bg-[#8B3A3A] text-white' : 'bg-[#475569]'}`}>
+                        <div className={`rounded-lg px-4 py-2 max-w-[80%] break-words ${msg.sender === 'USER' ? 'bg-[#8B3A3A] text-white' : 'bg-[#475569]'}`}>
                             <p className="text-sm">{msg.text}</p>
                         </div>
-                        {msg.sender === 'user' && (
+                        {msg.sender === 'USER' && (
                              <Avatar className="size-8">
                                 <AvatarFallback><User /></AvatarFallback>
                             </Avatar>
@@ -127,10 +212,10 @@ const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
                     {isLoading && (
                         <div className="flex items-start gap-3">
                              <Avatar className="size-8">
-                                <AvatarFallback className="bg-primary text-primary-foreground">IA</AvatarFallback>
+                                <AvatarFallback className="bg-[#8B3A3A] text-primary-foreground">IA</AvatarFallback>
                             </Avatar>
-                             <div className="rounded-lg px-4 py-2 bg-[#475569]">
-                                <p className="text-sm">Pensando...</p>
+                             <div className="rounded-lg px-4 py-2 bg-[#475569] flex items-center">
+                                <Loader2 className="h-4 w-4 animate-spin" />
                             </div>
                         </div>
                     )}
