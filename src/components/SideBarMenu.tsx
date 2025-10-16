@@ -12,6 +12,7 @@ import {
   Bell,
   Receipt,
   BarChartHorizontalBig,
+  Bot,
 } from "lucide-react";
 import {
   Sidebar,
@@ -140,6 +141,17 @@ export function SideBarMenu() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+            <SidebarMenuItem>
+            <SidebarMenuButton
+            asChild
+            isActive={location.pathname === "/chat"}
+            >
+            <Link to="/chat">
+                <Bot />
+                Assistente IA
+            </Link>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
