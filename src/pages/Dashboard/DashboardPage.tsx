@@ -41,6 +41,14 @@ interface Transaction {
   category: any;
 }
 
+interface Forecast {
+  id: number;
+  futureBalance: string;
+  analysisSummary: string;
+  forecastDate: string;
+  userId: number;
+}
+
 interface SummaryData {
   balance: number;
   income: number;
@@ -66,28 +74,34 @@ export function DashboardPage() {
     setError(null);
 
     try {
-      const [transactionsResponse, accountsResponse] = await Promise.all([
+      const [transactionsResponse, accountsResponse, forecastResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/transaction`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE_URL}/account`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${API_BASE_URL}/predict-balance/last`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
       ]);
 
       if (
         transactionsResponse.status === 401 ||
-        accountsResponse.status === 401
+        accountsResponse.status === 401 ||
+        forecastResponse.status === 401
       ) {
         logout();
         return;
       }
-      if (!transactionsResponse.ok || !accountsResponse.ok) {
+      if (!transactionsResponse.ok || !accountsResponse.ok || !forecastResponse.ok) {
         throw new Error("Erro ao carregar os dados do dashboard.");
       }
 
       const transactions: Transaction[] = await transactionsResponse.json();
       const accounts: any[] = await accountsResponse.json();
+      const forecast: Forecast = await forecastResponse.json();
+      const futureBalance = parseFloat(forecast.futureBalance);
 
       setRecentTransactions(transactions.slice(0, 5)); // Exibir 5 transações recentes
 
@@ -117,7 +131,7 @@ export function DashboardPage() {
         balance: totalBalance,
         income: totalIncome,
         expenses: totalExpenses,
-        forecast: 0,
+        forecast: futureBalance,
       });
 
       // --- Lógica para Gráficos (permanece a mesma) ---

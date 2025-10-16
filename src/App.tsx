@@ -15,6 +15,7 @@ import { ReportsPage } from "./pages/Reports/ReportsPage";
 import ForgotPasswordPage from "./pages/ForgotPassword/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPassword/ResetPasswordPage";
 import { ChatPage } from "./pages/Chat/ChatPage";
+import { PredictionPage } from "./pages/Prediction/PredictionPage";
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -75,6 +76,11 @@ function AppRoutes() {
       <Route
         path="/chat"
         element={isAuthenticated ? <ChatPage /> : <Navigate to="/login" />}
+      />
+
+      <Route
+        path="/prediction"
+        element={isAuthenticated ? <PredictionPage /> : <Navigate to="/login" />}
       />
 
       {/* Redirecionamento Padrão */}

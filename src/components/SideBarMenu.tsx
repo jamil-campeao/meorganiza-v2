@@ -13,6 +13,7 @@ import {
   Receipt,
   BarChartHorizontalBig,
   Bot,
+  BarChart2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -151,6 +152,17 @@ export function SideBarMenu() {
                 Assistente IA
             </Link>
             </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={location.pathname === "/prediction"}
+          >
+            <Link to="/prediction">
+              <BarChart2 />
+              Previsão com IA
+            </Link>
+          </SidebarMenuButton>
         </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
