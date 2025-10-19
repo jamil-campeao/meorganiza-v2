@@ -13,6 +13,8 @@ import {
   Receipt,
   BarChartHorizontalBig,
   Bot,
+  BarChart2,
+  BrainCircuit,
 } from "lucide-react";
 import {
   Sidebar,
@@ -141,17 +143,36 @@ export function SideBarMenu() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-            <SidebarMenuItem>
-            <SidebarMenuButton
-            asChild
-            isActive={location.pathname === "/chat"}
-            >
-            <Link to="/chat">
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={location.pathname === "/chat"}>
+              <Link to="/chat">
                 <Bot />
                 Assistente IA
-            </Link>
+              </Link>
             </SidebarMenuButton>
-        </SidebarMenuItem>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/prediction"}
+            >
+              <Link to="/prediction">
+                <BarChart2 />
+                Previsão com IA
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/ai-reports"}
+            >
+              <Link to="/ai-reports">
+                <BrainCircuit />
+                Relatórios IA
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
