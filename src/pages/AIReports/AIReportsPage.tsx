@@ -22,6 +22,7 @@ import {
   FileText,
   Trash2,
   History,
+  HelpCircle,
 } from "lucide-react";
 import { API_BASE_URL } from "../../constants/api";
 import {
@@ -30,12 +31,11 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   PieChart,
   Pie,
   Cell,
   Legend,
-  CartesianGrid,
 } from "recharts";
 import { ScrollArea } from "../../components/ui/scroll-area";
 import {
@@ -49,15 +49,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../../components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../components/ui/tooltip";
 
 interface GeneratedReport {
   id: string;
   title: string;
-  displayType: string; // 'text', 'table', 'bar_chart', 'pie_chart' etc.
-  data: any; // string, object, or array
-  userQuestion: string | null; // Tornar opcional, pois o exemplo não tem
+  displayType: string;
+  data: any;
+  userQuestion: string | null;
   createdAt: string;
 }
+import { CartesianGrid } from "recharts";
 
 type Status = "idle" | "loading" | "success" | "error";
 type HistoryStatus = "loading" | "success" | "error";
@@ -93,7 +100,7 @@ export function AIReportsPage() {
     setHistoryStatus("loading");
     try {
       const response = await fetch(`${API_BASE_URL}/report/ai-generated`, {
-        // Endpoint atualizado
+        // Endpoint para buscar histórico
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.status === 401) {
@@ -105,13 +112,11 @@ export function AIReportsPage() {
       }
       let reports: GeneratedReport[] = await response.json();
 
-      // Tenta parsear 'data' para cada relatório
       reports = reports.map((report) => {
         if (typeof report.data === "string") {
           try {
             return { ...report, data: JSON.parse(report.data) };
           } catch {
-            // Mantém como string se não for JSON
             return report;
           }
         }
@@ -123,7 +128,7 @@ export function AIReportsPage() {
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )
-      ); // Ordena mais recentes primeiro
+      );
       setHistoryStatus("success");
     } catch (err: any) {
       setHistoryStatus("error");
@@ -145,7 +150,7 @@ export function AIReportsPage() {
 
     setStatus("loading");
     setError(null);
-    setGeneratedReport(null); // Limpa o relatório anterior
+    setGeneratedReport(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/report/ai-generate`, {
@@ -170,7 +175,6 @@ export function AIReportsPage() {
 
       let result: GeneratedReport = await response.json();
 
-      // Tenta parsear 'data' se for string JSON
       if (typeof result.data === "string") {
         try {
           result.data = JSON.parse(result.data);
@@ -184,8 +188,8 @@ export function AIReportsPage() {
 
       setGeneratedReport(result);
       setStatus("success");
-      setQuery(""); // Limpa o input após sucesso
-      fetchHistoricalReports(); // Atualiza o histórico
+      setQuery("");
+      fetchHistoricalReports();
       toast.success("Relatório gerado com sucesso!");
     } catch (err: any) {
       setError(err.message);
@@ -197,15 +201,14 @@ export function AIReportsPage() {
   const handleDeleteReport = async (reportId: string) => {
     if (!token) return;
 
-    // Opcional: Adicionar feedback visual de loading na linha do histórico
     const originalReports = [...historicalReports];
-    setHistoricalReports((reports) => reports.filter((r) => r.id !== reportId)); // Remove otimisticamente
+    setHistoricalReports((reports) => reports.filter((r) => r.id !== reportId));
 
     try {
       const response = await fetch(
         `${API_BASE_URL}/report/ai-generated/${reportId}`,
         {
-          // Endpoint atualizado
+          // Endpoint de delete
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -220,33 +223,25 @@ export function AIReportsPage() {
       }
 
       toast.success("Relatório excluído com sucesso!");
-      // A remoção otimista já foi feita
     } catch (err: any) {
-      setHistoricalReports(originalReports); // Reverte em caso de erro
+      setHistoricalReports(originalReports);
       toast.error("Erro ao excluir relatório: " + err.message);
     }
   };
 
   // --- Funções de Renderização ---
 
-  // --- Funções de Renderização ---
-
   const renderReportData = (report: GeneratedReport | null) => {
     if (!report) return null;
 
-    // Garante que 'data' seja parseado se for string JSON
     let parsedData = report.data;
     if (typeof parsedData === "string") {
       try {
         parsedData = JSON.parse(parsedData);
-      } catch {
-        /* ignora se não for JSON válido */
-      }
+      } catch {}
     }
 
-    // Função auxiliar para formatar valores como moeda, se aplicável
     const formatValue = (value: any): string => {
-      // Tenta converter para número antes de formatar
       const num = Number(value);
       if (!isNaN(num)) {
         return num.toLocaleString("pt-BR", {
@@ -254,14 +249,12 @@ export function AIReportsPage() {
           currency: "BRL",
         });
       }
-      return String(value); // Retorna como string se não for número válido
+      return String(value);
     };
 
-    // Função auxiliar para formatar datas (simplificado)
     const formatDateSimple = (value: any): string => {
       if (typeof value === "string") {
         try {
-          // Tenta formatar como data, senão retorna a string original
           return new Date(value).toLocaleDateString("pt-BR", {
             year: "numeric",
             month: "2-digit",
@@ -276,7 +269,6 @@ export function AIReportsPage() {
 
     switch (report.displayType) {
       case "text":
-        // Se for um objeto com a chave 'value', exibe o valor formatado.
         if (
           typeof parsedData === "object" &&
           parsedData !== null &&
@@ -288,17 +280,14 @@ export function AIReportsPage() {
             </p>
           );
         }
-        // Se for apenas texto ou outro tipo, exibe como string
         return (
           <p className="text-sm text-gray-300 whitespace-pre-wrap">
             {String(parsedData)}
           </p>
         );
 
-      // CORREÇÃO: Tratar 'list' como 'table' se for array
       case "list":
       case "table":
-        // Verifica se é um array de objetos
         if (
           Array.isArray(parsedData) &&
           parsedData.length > 0 &&
@@ -311,7 +300,6 @@ export function AIReportsPage() {
               <table className="w-full text-sm text-left text-gray-400">
                 <thead className="text-xs uppercase bg-[#64748B]/50 text-gray-300 sticky top-0">
                   <tr>
-                    {/* Formata cabeçalhos comuns como 'date' e 'value' */}
                     {headers.map((header) => (
                       <th
                         key={header}
@@ -338,7 +326,6 @@ export function AIReportsPage() {
                           key={`${index}-${header}`}
                           className="px-4 py-2 whitespace-nowrap"
                         >
-                          {/* Formata valores de colunas comuns */}
                           {row[header] !== null && row[header] !== undefined
                             ? header === "value"
                               ? formatValue(row[header])
@@ -355,7 +342,6 @@ export function AIReportsPage() {
             </ScrollArea>
           );
         }
-        // Fallback se 'list' ou 'table' não for array de objetos válido
         if (
           typeof parsedData === "object" &&
           parsedData !== null &&
@@ -393,7 +379,6 @@ export function AIReportsPage() {
         }));
         return (
           <ResponsiveContainer width="100%" height={300}>
-            {/* Restante do código do BarChart... */}
             <BarChart
               data={barChartData}
               margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
@@ -405,7 +390,7 @@ export function AIReportsPage() {
                 fontSize={12}
                 tickFormatter={(value) => `R$${value}`}
               />
-              <Tooltip
+              <RechartsTooltip // Usando o alias RechartsTooltip
                 contentStyle={{
                   backgroundColor: "#475569",
                   border: "none",
@@ -448,7 +433,6 @@ export function AIReportsPage() {
 
         return (
           <ResponsiveContainer width="100%" height={300}>
-            {/* Restante do código do PieChart... */}
             <PieChart>
               <Pie
                 data={pieChartData}
@@ -467,7 +451,7 @@ export function AIReportsPage() {
                   />
                 ))}
               </Pie>
-              <Tooltip
+              <RechartsTooltip // Usando o alias RechartsTooltip
                 contentStyle={{
                   backgroundColor: "#475569",
                   border: "none",
@@ -487,7 +471,6 @@ export function AIReportsPage() {
         );
 
       default:
-        // Fallback
         if (typeof parsedData === "object" && parsedData !== null) {
           return (
             <pre className="text-xs bg-[#2F3748] p-2 rounded overflow-x-auto">
@@ -502,6 +485,7 @@ export function AIReportsPage() {
         );
     }
   };
+
   const renderHistory = () => {
     if (historyStatus === "loading") {
       return (
@@ -527,8 +511,6 @@ export function AIReportsPage() {
     }
     return (
       <ScrollArea className="h-96 pr-4 -mr-4">
-        {" "}
-        {/* Ajuste a altura conforme necessário */}
         <div className="space-y-4">
           {historicalReports.map((report) => (
             <Card
@@ -578,7 +560,6 @@ export function AIReportsPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-3 border-t border-[#64748B]">
-                {/* Renderiza uma prévia ou o conteúdo completo dependendo da complexidade */}
                 {renderReportData(report)}
               </CardContent>
             </Card>
@@ -653,22 +634,76 @@ export function AIReportsPage() {
                 </CardTitle>
                 <CardDescription>
                   Faça perguntas em linguagem natural sobre seus dados
-                  financeiros.
+                  financeiros. A I.A. pode gerar textos, totais, listas, tabelas
+                  e gráficos (barras ou pizza). Veja exemplos no ícone de ajuda.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleGenerateReport} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="ai-query">Sua Pergunta:</Label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      {" "}
+                      {/* Adicionado items-center */}
                       <Input
                         id="ai-query"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Ex: Quais foram minhas 5 maiores despesas no mês passado?"
+                        placeholder="Ex: Gráfico de pizza das despesas por categoria..."
                         className="flex-1"
                         disabled={status === "loading"}
                       />
+                      {/* ÍCONE DE AJUDA COM TOOLTIP */}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-gray-400 hover:text-gray-200"
+                              aria-label="Exemplos de perguntas"
+                            >
+                              <HelpCircle className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          {/* TOOLTIP COM ESTILO bg-popover */}
+                          <TooltipContent
+                            side="top"
+                            className="max-w-xs text-xs bg-popover text-popover-foreground p-2 rounded shadow-lg border border-border"
+                          >
+                            <p className="font-medium mb-1">
+                              Exemplos de Perguntas:
+                            </p>
+                            <ul className="list-disc list-inside space-y-1">
+                              <li>
+                                Qual meu gasto total com [Categoria] em
+                                [Mês/Ano]?
+                              </li>
+                              <li>
+                                Liste minhas despesas de [Categoria] nos últimos
+                                [X] dias/meses.
+                              </li>
+                              <li>
+                                Gere uma tabela com receitas e despesas de
+                                [Mês/Ano].
+                              </li>
+                              <li>
+                                Gráfico de barras das despesas por categoria em
+                                [Mês/Ano].
+                              </li>
+                              <li>
+                                Gráfico de pizza da distribuição de receitas
+                                este ano.
+                              </li>
+                              <li>
+                                Compare gastos de [Categoria A] e [Categoria B]
+                                no último trimestre.
+                              </li>
+                            </ul>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <Button
                         type="submit"
                         className="bg-[#8B3A3A] hover:bg-[#8B3A3A]/80"
