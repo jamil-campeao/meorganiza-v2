@@ -74,17 +74,18 @@ export function DashboardPage() {
     setError(null);
 
     try {
-      const [transactionsResponse, accountsResponse, forecastResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/transaction`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${API_BASE_URL}/account`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${API_BASE_URL}/predict-balance/last`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      ]);
+      const [transactionsResponse, accountsResponse, forecastResponse] =
+        await Promise.all([
+          fetch(`${API_BASE_URL}/transaction`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_BASE_URL}/account`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_BASE_URL}/predict-balance/last`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
       if (
         transactionsResponse.status === 401 ||
@@ -94,14 +95,22 @@ export function DashboardPage() {
         logout();
         return;
       }
-      if (!transactionsResponse.ok || !accountsResponse.ok || !forecastResponse.ok) {
+      if (
+        !transactionsResponse.ok ||
+        !accountsResponse.ok ||
+        !forecastResponse.ok
+      ) {
         throw new Error("Erro ao carregar os dados do dashboard.");
       }
 
       const transactions: Transaction[] = await transactionsResponse.json();
       const accounts: any[] = await accountsResponse.json();
       const forecast: Forecast = await forecastResponse.json();
-      const futureBalance = parseFloat(forecast.futureBalance);
+      let futureBalance = 0;
+
+      if (forecast) {
+        futureBalance = parseFloat(forecast.futureBalance) || 0;
+      }
 
       setRecentTransactions(transactions.slice(0, 5)); // Exibir 5 transações recentes
 

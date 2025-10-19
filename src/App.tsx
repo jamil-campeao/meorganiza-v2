@@ -16,6 +16,7 @@ import ForgotPasswordPage from "./pages/ForgotPassword/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPassword/ResetPasswordPage";
 import { ChatPage } from "./pages/Chat/ChatPage";
 import { PredictionPage } from "./pages/Prediction/PredictionPage";
+import { AIReportsPage } from "./pages/AIReports/AIReportsPage";
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -80,7 +81,14 @@ function AppRoutes() {
 
       <Route
         path="/prediction"
-        element={isAuthenticated ? <PredictionPage /> : <Navigate to="/login" />}
+        element={
+          isAuthenticated ? <PredictionPage /> : <Navigate to="/login" />
+        }
+      />
+
+      <Route
+        path="/ai-reports"
+        element={isAuthenticated ? <AIReportsPage /> : <Navigate to="/login" />}
       />
 
       {/* Redirecionamento Padrão */}
