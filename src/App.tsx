@@ -17,6 +17,7 @@ import ResetPasswordPage from "./pages/ResetPassword/ResetPasswordPage";
 import { ChatPage } from "./pages/Chat/ChatPage";
 import { PredictionPage } from "./pages/Prediction/PredictionPage";
 import { AIReportsPage } from "./pages/AIReports/AIReportsPage";
+import { DebtsPage } from "./pages/Debts/DebtsPage";
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -89,6 +90,11 @@ function AppRoutes() {
       <Route
         path="/ai-reports"
         element={isAuthenticated ? <AIReportsPage /> : <Navigate to="/login" />}
+      />
+
+      <Route
+        path="/debts"
+        element={isAuthenticated ? <DebtsPage /> : <Navigate to="/login" />}
       />
 
       {/* Redirecionamento Padrão */}
