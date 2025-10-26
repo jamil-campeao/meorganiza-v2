@@ -22,9 +22,9 @@ import {
   Edit,
   Trash2,
   DollarSign,
-  Info,
   BarChartHorizontalBig,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Dialog,
@@ -52,7 +52,6 @@ import { API_BASE_URL } from "../../constants/api";
 import { Bank } from "../Accounts/AccountsPage";
 import { debtTypes } from "../../components/DebtForm";
 import { Transaction } from "../Transactions/TransactionsPage";
-
 export interface DebtData {
   id: number;
   description: string;
@@ -156,7 +155,7 @@ export function DebtsPage() {
         throw new Error("Falha ao carregar o resumo da dívida.");
       }
 
-      const data: PaymentData[] = await response.json();
+      const data: PaymentData = await response.json();
       setSummaryDebt(data);
     } catch (error) {
       toast.error("Falha ao carregar o resumo da dívida.");
@@ -318,10 +317,6 @@ export function DebtsPage() {
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                   Minhas Dívidas
-                  {/* Botão para IA pode vir aqui depois */}
-                  <Button variant="outline" size="sm" disabled>
-                    <Info className="mr-2 h-4 w-4" /> Ajuda da IA (Em breve)
-                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -507,7 +502,7 @@ export function DebtsPage() {
             <DialogDescription>
               Exibindo pagamentos para a dívida:{" "}
               <span className="font-semibold">
-                {summaryDebt?.debtPayments?.description}
+                {summaryDebt?.debtPayments[0]?.transaction?.description || ""}
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -532,7 +527,7 @@ export function DebtsPage() {
                         new Date(b.paymentDate).getTime() -
                         new Date(a.paymentDate).getTime()
                     )
-                    .map((payment: PaymentData) => (
+                    .map((payment: DebtPayment) => (
                       <TableRow
                         key={payment.id}
                         className="border-b border-[#64748B]/50"
@@ -542,10 +537,6 @@ export function DebtsPage() {
                           {formatCurrency(payment.amount)}
                         </TableCell>
                         <TableCell className="text-xs text-gray-400">
-                          {/* Aqui você pode acessar a transação associada.
-                            Estou assumindo 'payment.transaction.description'
-                            Ajuste se o nome do campo for outro.
-                          */}
                           {payment.transaction?.description ||
                             `ID: ${payment.transactionId}`}
                         </TableCell>
