@@ -15,6 +15,7 @@ import {
   Bot,
   BarChart2,
   BrainCircuit,
+  HandCoins,
 } from "lucide-react";
 import {
   Sidebar,
@@ -170,6 +171,17 @@ export function SideBarMenu() {
               <Link to="/ai-reports">
                 <BrainCircuit />
                 Relatórios IA
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={location.pathname === "/debts"} // Nova rota
+            >
+              <Link to="/debts">
+                <HandCoins />
+                Dívidas
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
