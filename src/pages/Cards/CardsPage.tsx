@@ -285,7 +285,7 @@ export function CardsPage() {
         </div>
       </SidebarInset>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0] sm:max-w-md">
+        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editingCard ? "Editar Cartão" : "Novo Cartão"}

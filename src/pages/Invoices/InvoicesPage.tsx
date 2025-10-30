@@ -189,7 +189,7 @@ export function InvoicesPage() {
         </div>
       </SidebarInset>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0] sm:max-w-2xl">
+        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Detalhes da Fatura</DialogTitle>
             <DialogDescription>
