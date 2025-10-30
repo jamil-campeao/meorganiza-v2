@@ -106,22 +106,22 @@ export function InvoiceDetail({ invoice, onClose }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-4">
-      {/* Tabela com as transações da fatura */}
-      <div className="max-h-64 overflow-y-auto pr-2">
+      {/* Tabela com scroll aprimorado */}
+      <div className="max-h-[300px] overflow-y-auto border border-[#64748B] rounded-lg">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 bg-[#3F4A5C]">
             <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-white">Data</TableHead>
+              <TableHead className="text-white">Descrição</TableHead>
+              <TableHead className="text-right text-white">Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {invoice.transactions.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell>{formatDate(t.date)}</TableCell>
-                <TableCell>{t.description}</TableCell>
-                <TableCell className="text-right">
+              <TableRow key={t.id} className="border-[#64748B]">
+                <TableCell className="py-2">{formatDate(t.date)}</TableCell>
+                <TableCell className="py-2">{t.description}</TableCell>
+                <TableCell className="text-right py-2">
                   {formatCurrency(t.value)}
                 </TableCell>
               </TableRow>
