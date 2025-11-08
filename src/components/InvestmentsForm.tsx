@@ -1,171 +1,469 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Calendar } from "./ui/calendar";
+import { useForm } from "react-hook-form";
+import { Button } from "../components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { Input } from "../components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
+import { Calendar } from "../components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
+import { cn } from "../components/ui/utils";
 import { format } from "date-fns";
-import { useAuth } from "../context/AuthContext";
-import { API_BASE_URL } from "../constants/api";
-import { toast } from "sonner";
+import { ptBR } from "date-fns/locale";
+import { useEffect, useState } from "react";
 import { Investment } from "../pages/Investments/InvestmentsPage";
 
-interface InvestmentFormProps {
-  investment: Investment | null;
-  onSave: () => void;
+const InvestmentType = {
+  ACAO: "ACAO",
+  FII: "FII",
+  TESOURO_DIRETO: "TESOURO_DIRETO",
+  RENDA_FIXA_CDI: "RENDA_FIXA_CDI",
+  POUPANCA: "POUPANCA",
+  OUTRO: "OUTRO",
+} as const;
+
+const investmentTypeLabels = {
+  [InvestmentType.ACAO]: "Ação",
+  [InvestmentType.FII]: "Fundo Imobiliário (FII)",
+  [InvestmentType.TESOURO_DIRETO]: "Tesouro Direto",
+  [InvestmentType.RENDA_FIXA_CDI]: "Renda Fixa (CDI, LCI, etc.)",
+  [InvestmentType.POUPANCA]: "Poupança",
+  [InvestmentType.OUTRO]: "Outro",
+};
+
+const indexerLabels = {
+  CDI: "CDI",
+  IPCA: "IPCA",
+  SELIC: "SELIC",
+  PRE: "Pré-fixado",
+};
+
+type FormData = {
+  type: keyof typeof InvestmentType;
+  description: string;
+  acquisitionDate: Date;
+  quantity?: number;
+  acquisitionValue?: number;
+  initialAmount?: number;
+  indexer?: string;
+  rate?: number;
+  maturityDate?: Date | null;
+};
+
+type InvestmentFormProps = {
+  onSubmit: (values: FormData) => void;
   onCancel: () => void;
-}
+  investmentToEdit: Investment | null;
+};
 
 export function InvestmentForm({
-  investment,
-  onSave,
+  onSubmit,
   onCancel,
+  investmentToEdit,
 }: InvestmentFormProps) {
-  const { token } = useAuth();
-  const [formData, setFormData] = useState({
-    type: "",
-    description: "",
-    quantity: "",
-    acquisitionValue: "",
-    acquisitionDate: new Date(),
+  // 3. Atualizamos o useForm
+  const form = useForm<FormData>({
+    defaultValues: {
+      type: undefined,
+      description: "",
+      acquisitionDate: new Date(),
+      quantity: undefined,
+      acquisitionValue: undefined,
+      initialAmount: undefined,
+      indexer: undefined,
+      rate: undefined,
+      maturityDate: undefined,
+    },
   });
+  const [isAcquisitionDateOpen, setIsAcquisitionDateOpen] = useState(false);
+  const [isMaturityDateOpen, setIsMaturityDateOpen] = useState(false);
+
+  const watchedType = form.watch("type");
 
   useEffect(() => {
-    if (investment) {
-      setFormData({
-        type: investment.type,
-        description: investment.description,
-        quantity: investment.quantity.toString(),
-        acquisitionValue: investment.acquisitionValue.toString(),
-        acquisitionDate: new Date(investment.acquisitionDate),
-      });
-    }
-  }, [investment]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) return;
-
-    const url = investment
-      ? `${API_BASE_URL}/investment/${investment.id}`
-      : `${API_BASE_URL}/investment`;
-    const method = investment ? "PUT" : "POST";
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          acquisitionDate: formData.acquisitionDate.toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Falha ao salvar o investimento.");
-      }
-
-      toast.success(
-        `Investimento ${investment ? "atualizado" : "criado"} com sucesso!`
+    if (investmentToEdit) {
+      form.setValue("type", investmentToEdit.type as any);
+      form.setValue("description", investmentToEdit.description);
+      form.setValue(
+        "acquisitionDate",
+        new Date(investmentToEdit.acquisitionDate)
       );
-      onSave();
-    } catch (error: any) {
-      toast.error(error.message);
+      form.setValue(
+        "quantity",
+        investmentToEdit.quantity
+          ? parseFloat(String(investmentToEdit.quantity)) // Converte para string primeiro
+          : undefined
+      );
+      form.setValue(
+        "acquisitionValue",
+        investmentToEdit.acquisitionValue
+          ? parseFloat(String(investmentToEdit.acquisitionValue))
+          : undefined
+      );
+      form.setValue(
+        "initialAmount",
+        investmentToEdit.initialAmount
+          ? parseFloat(String(investmentToEdit.initialAmount))
+          : undefined
+      );
+      form.setValue("indexer", investmentToEdit.indexer || undefined);
+      form.setValue(
+        "rate",
+        investmentToEdit.rate
+          ? parseFloat(String(investmentToEdit.rate))
+          : undefined
+      );
+      form.setValue(
+        "maturityDate",
+        investmentToEdit.maturityDate
+          ? new Date(investmentToEdit.maturityDate)
+          : undefined
+      );
     }
+  }, [investmentToEdit, form]);
+
+  const handleSubmit = (values: FormData) => {
+    const dataToSend = {
+      ...values,
+      quantity: values.quantity ? Number(values.quantity) : undefined,
+      acquisitionValue: values.acquisitionValue
+        ? Number(values.acquisitionValue)
+        : undefined,
+      initialAmount: values.initialAmount
+        ? Number(values.initialAmount)
+        : undefined,
+      rate: values.rate ? Number(values.rate) : undefined,
+    };
+    onSubmit(dataToSend);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="description">Descrição (Ticker ou Nome)</Label>
-        <Input
-          id="description"
-          value={formData.description}
-          onChange={handleChange}
-          placeholder="Ex: PETR4, Tesouro Selic 2029"
-          required
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {/* --- CAMPO DE TIPO (CORRIGIDO) --- */}
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Investimento</FormLabel>
+              {/* 'onValueChange' e 'value' ficam no Select */}
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  {/* A ref DEVE ser passada para o SelectTrigger */}
+                  <SelectTrigger ref={field.ref}>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.values(InvestmentType).map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {investmentTypeLabels[type]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="type">Tipo de Ativo</Label>
-        <Input
-          id="type"
-          value={formData.type}
-          onChange={handleChange}
-          placeholder="Ex: Ação, Renda Fixa, FII"
-          required
+
+        {/* --- CAMPOS COMUNS (Descrição e Data) --- */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição (Ticker, Título, etc.)</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={
+                    watchedType === "ACAO"
+                      ? "Ex: PETR4"
+                      : watchedType === "RENDA_FIXA_CDI"
+                      ? "Ex: CDB Neon 110%"
+                      : "Ex: Tesouro Selic 2029"
+                  }
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="quantity">Quantidade</Label>
-          <Input
-            id="quantity"
-            type="number"
-            step="0.0001"
-            value={formData.quantity}
-            onChange={handleChange}
-            placeholder="Ex: 100"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="acquisitionValue">
-            Preço de Aquisição (Unitário)
-          </Label>
-          <Input
-            id="acquisitionValue"
-            type="number"
-            step="0.01"
-            value={formData.acquisitionValue}
-            onChange={handleChange}
-            placeholder="R$ 0,00"
-            required
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="acquisitionDate">Data de Aquisição</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left font-normal"
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {format(formData.acquisitionDate, "dd/MM/yyyy")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={formData.acquisitionDate}
-              onSelect={(d) =>
-                d && setFormData((prev) => ({ ...prev, acquisitionDate: d }))
-              }
-              initialFocus
+        <FormField
+          control={form.control}
+          name="acquisitionDate"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Data de Aquisição/Aplicação</FormLabel>
+              <Popover
+                open={isAcquisitionDateOpen}
+                onOpenChange={setIsAcquisitionDateOpen}
+              >
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    {/* A ref DEVE ser passada para o Button */}
+                    <Button
+                      ref={field.ref}
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "PPP", { locale: ptBR })
+                      ) : (
+                        <span>Escolha uma data</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={(date) => {
+                      field.onChange(date); // 'onChange' e 'value' são controlados aqui
+                      setIsAcquisitionDateOpen(false);
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* --- CAMPOS CONDICIONAIS: RENDA VARIÁVEL E TESOURO --- */}
+        {(watchedType === InvestmentType.ACAO ||
+          watchedType === InvestmentType.FII ||
+          watchedType === InvestmentType.TESOURO_DIRETO) && (
+          <>
+            <FormField
+              control={form.control}
+              name="quantity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quantidade</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      placeholder="Ex: 100 (para Ações) ou 0.01 (para Tesouro)"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : e.target.valueAsNumber
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </PopoverContent>
-        </Popover>
-      </div>
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="ghost" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit" className="bg-[#8B3A3A] hover:bg-[#8B3A3A]/80">
-          Salvar
-        </Button>
-      </div>
-    </form>
+            <FormField
+              control={form.control}
+              name="acquisitionValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preço Unitário de Aquisição (R$)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 35.50"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : e.target.valueAsNumber
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+
+        {/* --- CAMPOS CONDICIONAIS: RENDA FIXA, POUPANÇA, OUTROS --- */}
+        {(watchedType === InvestmentType.RENDA_FIXA_CDI ||
+          watchedType === InvestmentType.POUPANCA ||
+          watchedType === InvestmentType.OUTRO) && (
+          <FormField
+            control={form.control}
+            name="initialAmount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Valor Inicial Aplicado (R$)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 1000.00"
+                    {...field}
+                    value={field.value || ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === ""
+                          ? undefined
+                          : e.target.valueAsNumber
+                      )
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* --- CAMPOS CONDICIONAIS: APENAS RENDA FIXA (CDI, etc.) --- */}
+        {watchedType === InvestmentType.RENDA_FIXA_CDI && (
+          <>
+            <FormField
+              control={form.control}
+              name="indexer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Indexador</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o indexador" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(indexerLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="rate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Taxa (%)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 110 (para 110% do CDI) ou 12.5 (para 12.5% a.a.)"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : e.target.valueAsNumber
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+
+        {/* --- CAMPO CONDICIONAL: VENCIMENTO (Opcional para RF) --- */}
+        {(watchedType === InvestmentType.RENDA_FIXA_CDI ||
+          watchedType === InvestmentType.TESOURO_DIRETO ||
+          watchedType === InvestmentType.POUPANCA ||
+          watchedType === InvestmentType.OUTRO) && (
+          <FormField
+            control={form.control}
+            name="maturityDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data de Vencimento (Opcional)</FormLabel>
+                <Popover
+                  open={isMaturityDateOpen}
+                  onOpenChange={setIsMaturityDateOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        ref={field.ref}
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP", { locale: ptBR })
+                        ) : (
+                          <span>Escolha uma data (se houver)</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value || undefined}
+                      onSelect={(date) => {
+                        field.onChange(date);
+                        setIsMaturityDateOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* --- BOTÕES --- */}
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button type="submit">
+            {investmentToEdit ? "Atualizar" : "Salvar"} Investimento
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
