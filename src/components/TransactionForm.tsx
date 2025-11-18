@@ -297,14 +297,11 @@ export function TransactionForm({
       {formData.type === "DESPESA" && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="cardId">
-              Pagar com (Cartão) -{" "}
-              <span className="text-xs text-gray-400">Opcional</span>
-            </Label>
+            <Label htmlFor="cardId">Pagar com (Cartão)</Label>
             <Select
               value={formData.cardId}
               onValueChange={handleSelectChange("cardId")}
-              disabled={!!formData.accountId || !!transaction} // Desabilita na edição
+              disabled={!!formData.accountId} // Desabilita na edição
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um cartão..." />
