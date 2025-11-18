@@ -418,7 +418,7 @@ export function CategoriesPage() {
         </div>
       </SidebarInset>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0]">
+        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? "Editar Categoria" : "Nova Categoria"}

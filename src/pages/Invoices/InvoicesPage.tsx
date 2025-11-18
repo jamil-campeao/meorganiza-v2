@@ -189,21 +189,23 @@ export function InvoicesPage() {
         </div>
       </SidebarInset>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0] sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Fatura</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="bg-[#3F4A5C] border-[#64748B] text-[#E2E8F0] sm:max-w-lg max-h-[85vh] overflow-hidden">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl">Detalhes da Fatura</DialogTitle>
+            <DialogDescription className="text-[#94A3B8]">
               {selectedInvoice?.card.name} -{" "}
               {selectedInvoice && monthNames[selectedInvoice.month - 1]} de{" "}
               {selectedInvoice?.year}
             </DialogDescription>
           </DialogHeader>
-          {selectedInvoice && (
-            <InvoiceDetail
-              invoice={selectedInvoice}
-              onClose={handleCloseDetail}
-            />
-          )}
+          <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
+            {selectedInvoice && (
+              <InvoiceDetail
+                invoice={selectedInvoice}
+                onClose={handleCloseDetail}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
       <Toaster theme="dark" />
