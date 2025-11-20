@@ -142,14 +142,17 @@ export function InvestmentsPage() {
 
     try {
       if (investmentToEdit) {
-        const response = await fetch(`${API_BASE_URL}/investment`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ id: investmentToEdit.id, ...data }),
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/investment/${investmentToEdit.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ...data }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Não foi possível atualizar o investimento.");
