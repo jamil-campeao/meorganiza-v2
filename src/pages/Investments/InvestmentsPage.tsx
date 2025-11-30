@@ -40,7 +40,7 @@ import { formatCurrency, formatSimpleDate } from "../../components/ui/utils";
 import { Skeleton } from "../../components/ui/skeleton";
 import { useAuth } from "../../context/AuthContext";
 import { SideBarMenu } from "../../components/SideBarMenu";
-import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 
 export type Investment = {
   id: number;
@@ -142,14 +142,17 @@ export function InvestmentsPage() {
 
     try {
       if (investmentToEdit) {
-        const response = await fetch(`${API_BASE_URL}/investment`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ id: investmentToEdit.id, ...data }),
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/investment/${investmentToEdit.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ...data }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Não foi possível atualizar o investimento.");
@@ -337,10 +340,13 @@ export function InvestmentsPage() {
 
           {/* Tabela de Investimentos */}
           <div className="mt-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Meus Investimentos</h2>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger className="md:hidden" />
+                <h2 className="text-xl font-semibold">Meus Investimentos</h2>
+              </div>
               {!isFormOpen && (
-                <Button onClick={openForm} size="sm">
+                <Button onClick={openForm} size="sm" className="w-full md:w-auto">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Adicionar
                 </Button>

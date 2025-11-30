@@ -43,9 +43,9 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             return (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-[#64748B]/20 border border-[#64748B]"
+                className="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg bg-[#64748B]/20 border border-[#64748B] gap-4 md:gap-0"
               >
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 w-full md:w-auto">
                   <div
                     className={`p-2 rounded-full ${
                       transaction.type === "RECEITA"
@@ -79,12 +79,13 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                   </div>
                 </div>
                 <div
-                  className={`text-right ${
+                  className={`text-right w-full md:w-auto flex justify-between md:block items-center ${
                     transaction.type === "RECEITA"
                       ? "text-[#22C55E]"
                       : "text-[#DC2626]"
                   }`}
                 >
+                  <span className="md:hidden text-sm text-[#E2E8F0]/70">Valor</span>
                   <p className="font-semibold">
                     {/* 7. Usar o valor numérico para a lógica de exibição */}
                     {numericValue > 0 ? "+" : ""}R${" "}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 import { SideBarMenu } from "../../components/SideBarMenu";
 import { Button } from "../../components/ui/button";
 import {
@@ -107,7 +107,8 @@ export function ReportsPage() {
       <SidebarInset>
         <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
           <div className="container mx-auto p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4 mb-6">
+              <SidebarTrigger className="md:hidden" />
               <h1 className="text-3xl font-bold">Relatórios</h1>
             </div>
 
@@ -116,7 +117,7 @@ export function ReportsPage() {
               <CardHeader>
                 <CardTitle>Filtros</CardTitle>
               </CardHeader>
-              <CardContent className="flex items-center gap-4">
+              <CardContent className="flex flex-col md:flex-row items-start md:items-center gap-4">
                 <div className="space-y-2">
                   <Label>Período</Label>
                   <Popover>
@@ -159,7 +160,7 @@ export function ReportsPage() {
                 <Button
                   onClick={generateReport}
                   disabled={isLoading}
-                  className="self-end bg-[#8B3A3A] hover:bg-[#8B3A3A]/80"
+                  className="w-full md:w-auto self-end bg-[#8B3A3A] hover:bg-[#8B3A3A]/80"
                 >
                   <BarChart2 className="mr-2 h-4 w-4" />
                   {isLoading ? "Gerando..." : "Gerar Relatório"}

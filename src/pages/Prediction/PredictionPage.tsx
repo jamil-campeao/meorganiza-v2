@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 import { SideBarMenu } from "../../components/SideBarMenu";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -184,7 +184,10 @@ return (
       <SidebarInset>
         <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
           <div className="container mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">Previsão de Saldo com I.A.</h1>
+            <div className="flex items-center gap-4 mb-6">
+              <SidebarTrigger className="md:hidden" />
+              <h1 className="text-3xl font-bold">Previsão de Saldo com I.A.</h1>
+            </div>
             
             <Card className="border border-[#64748B] bg-[#3F4A5C]">
               <CardHeader>
