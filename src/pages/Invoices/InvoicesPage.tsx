@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 import { SideBarMenu } from "../../components/SideBarMenu";
 import {
   Card,
@@ -126,7 +126,8 @@ export function InvoicesPage() {
       <SidebarInset>
         <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
           <div className="container mx-auto p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4 mb-6">
+              <SidebarTrigger className="md:hidden" />
               <h1 className="text-3xl font-bold">Minhas Faturas</h1>
             </div>
             <Card className="border border-[#64748B] bg-[#3F4A5C]">
@@ -139,7 +140,7 @@ export function InvoicesPage() {
                     invoices.map((invoice) => (
                       <div
                         key={invoice.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-[#64748B]/20 border border-[#64748B]"
+                        className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg bg-[#64748B]/20 border border-[#64748B] gap-4 md:gap-0"
                       >
                         <div className="flex items-center gap-4">
                           <FileText className="h-6 w-6 text-blue-400" />
@@ -152,24 +153,28 @@ export function InvoicesPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6">
-                          <div>
-                            <p className="text-right text-lg font-semibold">
-                              {new Intl.NumberFormat("pt-BR", {
-                                style: "currency",
-                                currency: "BRL",
-                              }).format(invoice.totalAmount)}
-                            </p>
-                            <Badge
-                              className={`mt-1 float-right ${
-                                invoice.isPaid ? "bg-green-600" : "bg-red-600"
-                              }`}
-                            >
-                              {invoice.isPaid ? "Paga" : "Pendente"}
-                            </Badge>
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 w-full md:w-auto">
+                          <div className="flex justify-between w-full md:block">
+                            <span className="md:hidden text-gray-400">Total</span>
+                            <div className="text-right">
+                              <p className="text-lg font-semibold">
+                                {new Intl.NumberFormat("pt-BR", {
+                                  style: "currency",
+                                  currency: "BRL",
+                                }).format(invoice.totalAmount)}
+                              </p>
+                              <Badge
+                                className={`mt-1 ${
+                                  invoice.isPaid ? "bg-green-600" : "bg-red-600"
+                                }`}
+                              >
+                                {invoice.isPaid ? "Paga" : "Pendente"}
+                              </Badge>
+                            </div>
                           </div>
                           <Button
                             size="sm"
+                            className="w-full md:w-auto"
                             onClick={() => handleViewDetails(invoice.id)}
                           >
                             <Eye className="h-4 w-4 mr-2" /> Ver Detalhes

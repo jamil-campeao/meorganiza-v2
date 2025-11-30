@@ -146,9 +146,9 @@ export function BillAlerts({ onDataChange }: BillAlertsProps) {
               return (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[#64748B]/20 border border-[#64748B]"
+                  className="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg bg-[#64748B]/20 border border-[#64748B] gap-4 md:gap-0"
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 w-full md:w-auto">
                     <div
                       className={`p-2 rounded-full ${
                         status === "vencida"
@@ -185,8 +185,8 @@ export function BillAlerts({ onDataChange }: BillAlertsProps) {
                     </div>
                   </div>
 
-                  <div className="text-right flex items-center gap-4">
-                    <div>
+                  <div className="w-full md:w-auto flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4">
+                    <div className="text-left md:text-right">
                       <p className="text-[#E2E8F0] font-semibold">
                         R$ {Number(payment.amount).toFixed(2)}
                       </p>

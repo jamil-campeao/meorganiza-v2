@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 import { SideBarMenu } from "../../components/SideBarMenu";
 import { Button } from "../../components/ui/button";
 import {
@@ -177,15 +177,18 @@ export function BillsPage() {
       <SidebarInset>
         <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
           <div className="container mx-auto p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold">
-                Gerenciar Contas Recorrentes
-              </h1>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger className="md:hidden" />
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  Gerenciar Contas
+                </h1>
+              </div>
               <Button
                 onClick={handleAddNew}
-                className="bg-[#8B3A3A] hover:bg-[#8B3A3A]/80"
+                className="bg-[#8B3A3A] hover:bg-[#8B3A3A]/80 w-full md:w-auto"
               >
-                <PlusCircle className="mr-2 h-4 w-4" /> Nova Regra de Conta
+                <PlusCircle className="mr-2 h-4 w-4" /> Nova Regra
               </Button>
             </div>
 
