@@ -30,7 +30,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { SideBarMenu } from "../../components/SideBarMenu";
-import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 
 interface Transaction {
   id: string;
@@ -236,13 +236,14 @@ export function DashboardPage() {
       <SideBarMenu />
       <SidebarInset>
         <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
-          <div className="container mx-auto p-6">
-            <div className="mb-8">
+          <div className="p-6 w-full">
+            <div className="mb-8 flex items-center gap-4">
+              <SidebarTrigger className="md:hidden" />
               {summaryData && <DashboardOverview summaryData={summaryData} />}
             </div>
 
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-6 bg-[#475569] rounded-lg p-1">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 bg-[#475569] rounded-lg p-1 h-auto">
                 <TabsTrigger
                   value="overview"
                   className="data-[state=active]:bg-[#8B3A3A] data-[state=active]:text-[#F8FAFC] text-[#E2E8F0] flex items-center gap-2"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, FormEvent, useCallback } from "react";
-import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 import { SideBarMenu } from "../../components/SideBarMenu";
 import { Button } from "../../components/ui/button";
 import {
@@ -623,7 +623,10 @@ export function AIReportsPage() {
       <SidebarInset>
         <div className="min-h-screen bg-[#2F3748] text-[#E2E8F0] dark w-full">
           <div className="container mx-auto p-6 space-y-6">
-            <h1 className="text-3xl font-bold">Relatórios com I.A.</h1>
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="md:hidden" />
+              <h1 className="text-3xl font-bold">Relatórios com I.A.</h1>
+            </div>
 
             {/* Seção de Geração de Relatório */}
             <Card className="border border-[#64748B] bg-[#3F4A5C]">
