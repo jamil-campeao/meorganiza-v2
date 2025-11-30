@@ -1,7 +1,7 @@
 # Relatório de Testes e Validação de Qualidade (QA)
 
 ## 1. Introdução
-Este documento detalha a estratégia de testes implementada para a aplicação "MeOrganiza v2". O objetivo foi estabelecer uma base sólida de garantia de qualidade (QA) utilizando ferramentas modernas e padrões de mercado para aplicações React com Vite.
+Este documento detalha a estratégia de testes implementada para a aplicação MeOrganiza. O objetivo foi estabelecer uma base sólida de garantia de qualidade (QA) utilizando ferramentas modernas e padrões de mercado para aplicações React com Vite.
 
 ## 2. Ambiente de Testes
 Para garantir a confiabilidade e a performance dos testes, foram selecionadas as seguintes tecnologias:
@@ -48,9 +48,3 @@ Isso confirma que:
 1. O ambiente de testes está configurado corretamente.
 2. Os componentes base (Button) funcionam como esperado.
 3. A aplicação inicia e integra os provedores de rota e autenticação corretamente.
-
-## 5. Próximos Passos Sugeridos
-Para expandir a cobertura de testes no TCC, recomenda-se:
-- **Testar Fluxos Críticos**: Implementar testes para o fluxo de Login e Cadastro.
-- **Mock de API**: Utilizar `msw` (Mock Service Worker) para simular chamadas ao backend.
-- **Testes E2E**: Considerar ferramentas como Playwright ou Cypress para testes ponta a ponta.
