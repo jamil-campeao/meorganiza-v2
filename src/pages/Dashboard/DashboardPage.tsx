@@ -68,6 +68,9 @@ export function DashboardPage() {
   const [categoryChartData, setCategoryChartData] = useState<CategoryData[]>(
     []
   );
+  const [categoryChartDataResume, setCategoryChartDataResume] = useState<CategoryData[]>(
+    []
+  );
 
   const fetchDashboardData = useCallback(async () => {
     if (!token) return;
@@ -143,7 +146,6 @@ export function DashboardPage() {
         forecast: futureBalance,
       });
 
-      // --- Lógica para Gráficos (permanece a mesma) ---
       const monthlySummary: {
         [key: string]: { receitas: number; despesas: number };
       } = {};
@@ -208,7 +210,8 @@ export function DashboardPage() {
         value: categorySummary[name],
         color: colors[colorIndex++ % colors.length],
       }));
-      setCategoryChartData(processedCategoryData);
+      setCategoryChartData(processedCategoryData.sort((a, b) => b.value - a.value));
+      setCategoryChartDataResume(processedCategoryData.slice(0, 10).sort((a, b) => b.value - a.value));
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -285,7 +288,8 @@ export function DashboardPage() {
               <TabsContent value="overview" className="space-y-6">
                 <TransactionChart
                   monthlyData={monthlyChartData}
-                  categoryData={categoryChartData}
+                  categoryData={categoryChartDataResume}
+                  caption="Despesas por Categoria - 10 maiores"
                 />
                 <div className="grid gap-6 md:grid-cols-2">
                   <RecentTransactions transactions={recentTransactions} />
