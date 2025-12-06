@@ -81,14 +81,14 @@ export function ReportsPage() {
         "#ec4899",
       ];
       const categoryDataWithColors = categoryResult.map(
-        (item: any, index: number) => ({
+        (item: CategoryData, index: number) => ({
           ...item,
           color: colors[index % colors.length],
         })
       );
 
       setMonthlyData(monthlyResult);
-      setCategoryData(categoryDataWithColors);
+      setCategoryData(categoryDataWithColors.sort((a: CategoryData, b: CategoryData) => b.value - a.value));
     } catch (err: any) {
       toast.error(err.message);
     } finally {

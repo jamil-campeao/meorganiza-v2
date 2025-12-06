@@ -27,17 +27,19 @@ export interface CategoryData {
 interface TransactionChartProps {
   monthlyData: MonthlyData[];
   categoryData: CategoryData[];
+  caption?: string;
 }
 
 export function TransactionChart({
   monthlyData,
   categoryData,
+  caption = "Despesas por Categoria",
 }: TransactionChartProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card className="border border-[#64748B] bg-[#3F4A5C]">
         <CardHeader>
-          <CardTitle className="text-[#E2E8F0]">Receitas vs Despesas</CardTitle>
+          <CardTitle className="text-[#E2E8F0]">{caption}</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -69,7 +71,7 @@ export function TransactionChart({
       <Card className="border border-[#64748B] bg-[#3F4A5C]">
         <CardHeader>
           <CardTitle className="text-[#E2E8F0]">
-            Despesas por Categoria
+            {caption}
           </CardTitle>
         </CardHeader>
         <CardContent>
